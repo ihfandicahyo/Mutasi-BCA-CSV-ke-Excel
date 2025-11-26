@@ -1,0 +1,16 @@
+# BCA CSV ke Excel
+
+Modul ini berbasis python bertujuan untuk merubah dokumen mutasi BCA jenis csv ke Excel
+
+## Persyaratan
+
+Lewati langkah 1—2 jika peranti Anda telah terpasang python, pip, pandas dan openpyxl
+- Pasang [python](https://www.python.org/downloads/) 
+- Pasang pandas & openpyxl dengan perintah "pip install pandas openpyxl"
+- [Unduh modul ini](https://www.github.com/ihfandicahyo) dan ekstrak
+- Buat folder baru dan letakkan modul yang telah di unduh pada folder tersebut 
+- Salin semua data mutasi BCA jenis csv ke folder tersebut 
+- Klik 2× modul
+____
+
+Telah di uji pada Windows 11
