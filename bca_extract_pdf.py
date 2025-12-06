@@ -1,6 +1,8 @@
 import pdfplumber
 import pandas as pd
 import re
+import glob # Untuk mencari file
+import os   # Untuk cek waktu file
 
 def extract_bca_statement(pdf_path, output_path):
     # Regex untuk mendeteksi baris yang diawali tanggal (Format DD/MM)
@@ -24,6 +26,7 @@ def extract_bca_statement(pdf_path, output_path):
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text()
+            if not text: continue # Skip halaman kosong
             lines = text.split('\n')
             
             for line in lines:
@@ -86,6 +89,11 @@ def extract_bca_statement(pdf_path, output_path):
     # Buat DataFrame
     df = pd.DataFrame(transactions)
 
+    # Cek jika DataFrame kosong
+    if df.empty:
+        print("Tidak ada transaksi yang ditemukan atau format PDF tidak sesuai.")
+        return
+
     # Data Cleaning
     df['Keterangan'] = df['Keterangan'].str.strip()
     df['Debet'] = df.apply(lambda x: x['Mutasi'] if x['Tipe'] == 'DB' else 0, axis=1)
@@ -95,21 +103,17 @@ def extract_bca_statement(pdf_path, output_path):
     final_cols = ['Tanggal', 'Keterangan', 'Debet', 'Kredit', 'Saldo']
     df = df[final_cols]
     
-    print(f"Menyimpan ke Excel dengan format otomatis: {output_path}")
+    print(f"Menyimpan ke Excel: {output_path}")
     
     # Gunakan ExcelWriter dengan engine xlsxwriter
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        df.to_excel(writer, index=False, sheet_name='Mutasi')
         
         workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
+        worksheet = writer.sheets['Mutasi']
         
         # Format Angka: Menggunakan pemisah ribuan dan 2 desimal
         number_format = workbook.add_format({'num_format': '#,##0.00'})
-        
-        # Terapkan format ke kolom C (idx 2), D (idx 3), E (idx 4)
-        # Ingat: Pandas index mulai dari 0. Kolom C adalah index 2.
-        worksheet.set_column(2, 4, 15, number_format) 
         
         # Auto-fit Column Width
         for i, col in enumerate(df.columns):
@@ -117,23 +121,47 @@ def extract_bca_statement(pdf_path, output_path):
             max_len = max(
                 df[col].astype(str).map(len).max(), # Panjang data
                 len(col) # Panjang header
-            ) + 2 # Tambahkan sedikit padding
+            ) + 2 
             
             # Terapkan lebar kolom
-            if i in [2, 3, 4]:
-                # Untuk kolom angka, set lebar DAN format
+            if i in [2, 3, 4]: # Kolom Debet, Kredit, Saldo
                 worksheet.set_column(i, i, max_len, number_format)
             else:
-                # Untuk kolom biasa (Tanggal/Keterangan), set lebar saja
                 worksheet.set_column(i, i, max_len)
 
-    print("Berhasil!")
+    print("✅ Berhasil dikonversi!")
 
-# --- EKSEKUSI ---
-file_input = '7830482452_NOV_2025.pdf'
-file_output = 'Mutasi_Ekstrak_BCA_PDF.xlsx'
+# --- EKSEKUSI OTOMATIS ---
 
-try:
-    extract_bca_statement(file_input, file_output)
-except Exception as e:
-    print(f"Terjadi error: {e}")
+def main():
+    # 1. Cari semua file PDF di folder ini
+    pdf_files = glob.glob("*.pdf")
+    
+    if not pdf_files:
+        print("❌ Tidak ada file PDF ditemukan di folder ini.")
+        return
+
+    # 2. Ambil file PDF yang paling baru (berdasarkan waktu modifikasi)
+    # Ini berguna jika folder Downloads menumpuk, dia akan ambil yang barusan diunduh.
+    latest_file = max(pdf_files, key=os.path.getctime)
+    
+    print(f"📄 File terdeteksi: {latest_file}")
+    
+    # 3. Buat nama output dinamis agar tidak menimpa file lama
+    # Contoh: 'Statement_Jan.pdf' -> 'Statement_Jan_Excel.xlsx'
+    file_output = latest_file.replace('.pdf', '_Excel.xlsx')
+    
+    # Cek apakah file output sudah ada (opsional, untuk safety)
+    if os.path.exists(file_output):
+        response = input(f"⚠️ File '{file_output}' sudah ada. Timpa? (y/n): ")
+        if response.lower() != 'y':
+            print("Dibatalkan pengguna.")
+            return
+
+    try:
+        extract_bca_statement(latest_file, file_output)
+    except Exception as e:
+        print(f"❌ Terjadi error: {e}")
+
+if __name__ == "__main__":
+    main()
