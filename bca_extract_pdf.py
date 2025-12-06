@@ -129,7 +129,7 @@ def extract_bca_statement(pdf_path, output_path):
             else:
                 worksheet.set_column(i, i, max_len)
 
-    print("✅ Berhasil dikonversi!")
+    print("Berhasil dikonversi!")
 
 # --- EKSEKUSI OTOMATIS ---
 
@@ -138,14 +138,14 @@ def main():
     pdf_files = glob.glob("*.pdf")
     
     if not pdf_files:
-        print("❌ Tidak ada file PDF ditemukan di folder ini.")
+        print("Tidak ada file PDF ditemukan di folder ini.")
         return
 
     # 2. Ambil file PDF yang paling baru (berdasarkan waktu modifikasi)
     # Ini berguna jika folder Downloads menumpuk, dia akan ambil yang barusan diunduh.
     latest_file = max(pdf_files, key=os.path.getctime)
     
-    print(f"📄 File terdeteksi: {latest_file}")
+    print(f"File terdeteksi: {latest_file}")
     
     # 3. Buat nama output dinamis agar tidak menimpa file lama
     # Contoh: 'Statement_Jan.pdf' -> 'Statement_Jan_Excel.xlsx'
@@ -153,7 +153,7 @@ def main():
     
     # Cek apakah file output sudah ada (opsional, untuk safety)
     if os.path.exists(file_output):
-        response = input(f"⚠️ File '{file_output}' sudah ada. Timpa? (y/n): ")
+        response = input(f"File '{file_output}' sudah ada. Timpa? (y/n): ")
         if response.lower() != 'y':
             print("Dibatalkan pengguna.")
             return
@@ -161,7 +161,7 @@ def main():
     try:
         extract_bca_statement(latest_file, file_output)
     except Exception as e:
-        print(f"❌ Terjadi error: {e}")
+        print(f"Terjadi error: {e}")
 
 if __name__ == "__main__":
     main()
