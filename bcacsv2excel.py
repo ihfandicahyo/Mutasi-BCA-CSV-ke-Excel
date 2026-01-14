@@ -12,7 +12,7 @@ def convert_csv_to_excel_autofit():
 
     if not csv_files:
         print("Tidak ditemukan file CSV di folder ini.")
-        input("Ketik enter untuk keluar")
+        input("Tekan enter untuk keluar")
         return
 
     print(f"Ditemukan {len(csv_files)} file CSV. Memulai proses...\n")
@@ -46,33 +46,30 @@ def convert_csv_to_excel_autofit():
             except:
                 pass
 
-            valid_dates = []
-            valid_months = []
-            
-            if len(df_clean) > 6:
-                possible_dates = df_clean.iloc[6:, 0]
-                for val in possible_dates:
-                    try:
-                        dt = datetime.strptime(str(val).strip(), "%d/%m/%Y")
-                        valid_dates.append(dt.day)
-                        valid_months.append(dt.month)
-                    except:
-                        continue
-
             dd_str = "00"
             mm_str = "UNK"
 
-            if valid_dates:
-                min_day = min(valid_dates)
-                max_day = max(valid_dates)
+            try:
+                raw_periode = str(df_clean.iloc[3, 0])
+                clean_periode = raw_periode.replace('Periode', '').replace(':', '').strip()
                 
-                if min_day == max_day:
-                    dd_str = str(min_day)
-                else:
-                    dd_str = f"{min_day} - {max_day}"
+                parts = clean_periode.split('-')
                 
-                if valid_months:
-                    mm_str = month_map.get(valid_months[0], "UNK")
+                if len(parts) == 2:
+                    date_start_str = parts[0].strip()
+                    date_end_str = parts[1].strip()
+
+                    dt_start = datetime.strptime(date_start_str, "%d/%m/%Y")
+                    dt_end = datetime.strptime(date_end_str, "%d/%m/%Y")
+
+                    if dt_start.day == dt_end.day:
+                        dd_str = str(dt_start.day)
+                    else:
+                        dd_str = f"{dt_start.day} - {dt_end.day}"
+                    
+                    mm_str = month_map.get(dt_start.month, "UNK")
+            except Exception as e:
+                print(f"   [INFO] Gagal membaca tanggal dari baris ke-4: {e}")
 
             output_filename = f"BCA {rek_digits} {dd_str} {mm_str}.xlsx"
             output_path = os.path.join(current_folder, output_filename)
@@ -106,7 +103,7 @@ def convert_csv_to_excel_autofit():
         print("-" * 40)
 
     print("\nSemua proses selesai!")
-    input("Ketik enter untuk keluar")
+    input("Tekan enter untuk keluar")
 
 if __name__ == "__main__":
     convert_csv_to_excel_autofit()
