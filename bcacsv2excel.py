@@ -71,8 +71,15 @@ def convert_csv_to_excel_autofit():
             except Exception as e:
                 print(f"   [INFO] Gagal membaca tanggal dari baris ke-4: {e}")
 
-            output_filename = f"BCA {rek_digits} {dd_str} {mm_str}.xlsx"
+            base_name = f"BCA {rek_digits} {dd_str} {mm_str}"
+            output_filename = f"{base_name}.xlsx"
             output_path = os.path.join(current_folder, output_filename)
+
+            counter = 1
+            while os.path.exists(output_path):
+                output_filename = f"{base_name}-{counter}.xlsx"
+                output_path = os.path.join(current_folder, output_filename)
+                counter += 1
 
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
                 df_clean.to_excel(writer, index=False, header=False, sheet_name='Sheet1')
